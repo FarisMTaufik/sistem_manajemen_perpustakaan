@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class InventarisController extends Controller
 {
@@ -90,26 +91,26 @@ class InventarisController extends Controller
 
         $data = $request->all();
         $data['petugas'] = Auth::user()->name;
-        
+
         DB::beginTransaction();
         try {
             // Simpan data inventaris
             $inventaris = InventarisBuku::create($data);
-            
+
             // Update informasi buku
             $buku = Buku::findOrFail($request->faris_buku_id);
             $buku->kondisi = $request->kondisi;
             $buku->status_inventaris = $request->status_inventaris;
             $buku->tanggal_inventaris = $request->tanggal_pemeriksaan;
             $buku->catatan_inventaris = $request->catatan;
-            
+
             // Jika status dalam perbaikan, kurangi jumlah tersedia
             if ($request->status_inventaris === 'dalam_perbaikan' || $request->status_inventaris === 'hilang') {
                 $buku->jumlah_tersedia = max(0, $buku->jumlah_tersedia - 1);
             }
-            
+
             $buku->save();
-            
+
             DB::commit();
             return redirect()->route('admin.inventaris.index')
                 ->with('success', 'Data inventaris berhasil ditambahkan');
@@ -162,21 +163,21 @@ class InventarisController extends Controller
         }
 
         $data = $request->all();
-        
+
         DB::beginTransaction();
         try {
             // Update data inventaris
             $inventari->update($data);
-            
+
             // Update informasi buku
             $buku = Buku::findOrFail($inventari->faris_buku_id);
-            
+
             // Jika status berubah, perlu update jumlah tersedia
             $statusLama = $inventari->getOriginal('status_inventaris');
             $statusBaru = $request->status_inventaris;
-            
+
             // Kembalikan jumlah tersedia jika sebelumnya dalam perbaikan
-            if (($statusLama === 'dalam_perbaikan' || $statusLama === 'hilang') && 
+            if (($statusLama === 'dalam_perbaikan' || $statusLama === 'hilang') &&
                 ($statusBaru === 'tersedia' || $statusBaru === 'dipinjam')) {
                 $buku->jumlah_tersedia = $buku->jumlah_tersedia + 1;
             }
@@ -185,13 +186,13 @@ class InventarisController extends Controller
                      ($statusBaru === 'dalam_perbaikan' || $statusBaru === 'hilang')) {
                 $buku->jumlah_tersedia = max(0, $buku->jumlah_tersedia - 1);
             }
-            
+
             $buku->kondisi = $request->kondisi;
             $buku->status_inventaris = $request->status_inventaris;
             $buku->tanggal_inventaris = $request->tanggal_pemeriksaan;
             $buku->catatan_inventaris = $request->catatan;
             $buku->save();
-            
+
             DB::commit();
             return redirect()->route('admin.inventaris.index')
                 ->with('success', 'Data inventaris berhasil diperbarui');
@@ -212,56 +213,64 @@ class InventarisController extends Controller
         return redirect()->route('admin.inventaris.index')
             ->with('success', 'Data inventaris berhasil dihapus');
     }
-    
+
     /**
      * Menampilkan laporan inventaris.
      */
     public function laporan(Request $request)
     {
         $query = InventarisBuku::with('buku');
-        
+
         // Filter berdasarkan kondisi
         if ($request->has('kondisi') && $request->kondisi != '') {
             $query->where('kondisi', $request->kondisi);
         }
-        
+
         // Filter berdasarkan status
         if ($request->has('status') && $request->status != '') {
             $query->where('status_inventaris', $request->status);
         }
-        
+
         // Filter berdasarkan rentang tanggal
         if ($request->has('tanggal_awal') && $request->tanggal_awal != '') {
             $query->where('tanggal_pemeriksaan', '>=', $request->tanggal_awal);
         }
-        
+
         if ($request->has('tanggal_akhir') && $request->tanggal_akhir != '') {
             $query->where('tanggal_pemeriksaan', '<=', $request->tanggal_akhir);
         }
-        
+
         // Filter berdasarkan perlu tindakan lanjut
         if ($request->has('perlu_tindakan_lanjut') && $request->perlu_tindakan_lanjut != '') {
             $query->where('perlu_tindakan_lanjut', $request->perlu_tindakan_lanjut == '1');
         }
-        
+
+        // Handle export
+        if ($request->has('export') && $request->export === 'pdf') {
+            $inventaris = $query->orderBy('tanggal_pemeriksaan', 'desc')->get();
+            $pdf = PDF::loadView('admin.inventaris.pdf.laporan', compact('inventaris'));
+            return $pdf->download('laporan-inventaris-' . date('Y-m-d') . '.pdf');
+        }
+
         $inventaris = $query->orderBy('tanggal_pemeriksaan', 'desc')->paginate(15);
-        
+
         return view('admin.inventaris.laporan', compact('inventaris'));
     }
-    
+
     /**
      * Menandai buku perlu perbaikan.
      */
     public function perluPerbaikan()
     {
         $buku = Buku::where('kondisi', 'perlu_perbaikan')
+            ->orWhere('kondisi', 'rusak')
             ->orWhere('status_inventaris', 'dalam_perbaikan')
             ->latest()
             ->paginate(10);
-        
+
         return view('admin.inventaris.perlu-perbaikan', compact('buku'));
     }
-    
+
     /**
      * Mengelola perbaikan buku.
      */
@@ -270,7 +279,7 @@ class InventarisController extends Controller
         $riwayatInventaris = $buku->inventaris()->latest()->get();
         return view('admin.inventaris.kelola-perbaikan', compact('buku', 'riwayatInventaris'));
     }
-    
+
     /**
      * Memproses perbaikan buku.
      */
@@ -281,7 +290,7 @@ class InventarisController extends Controller
             'catatan' => 'required|string',
             'estimasi_selesai' => 'required|date|after_or_equal:tanggal_perbaikan',
         ]);
-        
+
         DB::beginTransaction();
         try {
             // Catat inventaris baru
@@ -296,13 +305,13 @@ class InventarisController extends Controller
             $inventaris->tanggal_selesai_perbaikan = $request->estimasi_selesai;
             $inventaris->perlu_tindakan_lanjut = true;
             $inventaris->save();
-            
+
             // Update status buku
             $buku->status_inventaris = 'dalam_perbaikan';
             $buku->kondisi = 'perlu_perbaikan';
             $buku->catatan_inventaris = $request->catatan;
             $buku->save();
-            
+
             DB::commit();
             return redirect()->route('admin.inventaris.perlu-perbaikan')
                 ->with('success', 'Buku berhasil diproses untuk perbaikan');
@@ -313,7 +322,7 @@ class InventarisController extends Controller
                 ->withInput();
         }
     }
-    
+
     /**
      * Menyelesaikan perbaikan buku.
      */
@@ -324,7 +333,7 @@ class InventarisController extends Controller
             'hasil_perbaikan' => 'required|string',
             'kondisi_setelah' => 'required|in:baik,rusak,perlu_perbaikan',
         ]);
-        
+
         DB::beginTransaction();
         try {
             // Catat inventaris baru untuk menandai selesai perbaikan
@@ -338,14 +347,14 @@ class InventarisController extends Controller
             $inventaris->tanggal_selesai_perbaikan = $request->tanggal_selesai;
             $inventaris->perlu_tindakan_lanjut = $request->kondisi_setelah !== 'baik';
             $inventaris->save();
-            
+
             // Update status buku
             $buku->status_inventaris = 'tersedia';
             $buku->kondisi = $request->kondisi_setelah;
             $buku->catatan_inventaris = $request->hasil_perbaikan;
             $buku->jumlah_tersedia = $buku->jumlah_tersedia + 1;  // Kembalikan jumlah tersedia
             $buku->save();
-            
+
             DB::commit();
             return redirect()->route('admin.inventaris.perlu-perbaikan')
                 ->with('success', 'Perbaikan buku berhasil diselesaikan');

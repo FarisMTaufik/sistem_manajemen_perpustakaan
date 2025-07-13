@@ -82,9 +82,6 @@
                             <a href="{{ route('admin.inventaris.laporan', array_merge(request()->query(), ['export' => 'pdf'])) }}" class="btn btn-outline-danger">
                                 <i class="fas fa-file-pdf"></i> Export PDF
                             </a>
-                            <a href="{{ route('admin.inventaris.laporan', array_merge(request()->query(), ['export' => 'excel'])) }}" class="btn btn-outline-success">
-                                <i class="fas fa-file-excel"></i> Export Excel
-                            </a>
                         </div>
                     </div>
 
@@ -257,16 +254,16 @@
         .btn, .no-print {
             display: none !important;
         }
-        
+
         .card {
             border: none !important;
             box-shadow: none !important;
         }
-        
+
         .container {
             width: 100% !important;
             max-width: 100% !important;
         }
     }
 </style>
-@endsection 
+@endsection
