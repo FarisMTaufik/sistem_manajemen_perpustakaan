@@ -101,16 +101,12 @@ Sistem menggunakan beberapa tabel utama dengan prefix "faris_" sesuai ketentuan:
 Sistem ini memiliki beberapa akun default yang dapat digunakan untuk login:
 
 ### Admin
-- Email: admin@example.com
-- Password: password
+- Email: admin@perpustakaan.com
+- Password: admin123
 
 ### Staff
-- Email: staff@example.com
-- Password: password
-
-### Anggota
-- Email: anggota@example.com
-- Password: password
+- Email: staff@perpustakaan.com
+- Password: staff123
 
 ## Peran dan Hak Akses
 
