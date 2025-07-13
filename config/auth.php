@@ -1,12 +1,5 @@
 <?php
 
-// ================================================================================
-// Auth Configuration - Last loaded: <?php echo date('Y-m-d H:i:s'); ?>
-//
-// File ini berisi konfigurasi autentikasi untuk aplikasi Management Library
-// Sistem autentikasi mendukung: admin, staff, dan anggota perpustakaan
-// ================================================================================
-
 return [
 
     /*
@@ -118,24 +111,5 @@ return [
     */
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
-
-    /*
-    |--------------------------------------------------------------------------
-    | Authentication Logging
-    |--------------------------------------------------------------------------
-    |
-    | Konfigurasi untuk pencatatan aktivitas autentikasi
-    | Mengaktifkan log untuk login, logout, dan percobaan login
-    | Level log dapat diatur sesuai kebutuhan
-    |
-    */
-
-    'logging' => [
-        'enabled' => env('AUTH_LOGGING', true),
-        'login_success' => true,
-        'login_failed' => true,
-        'logout' => true,
-        'log_level' => env('AUTH_LOG_LEVEL', 'info'),
-    ],
 
 ];
