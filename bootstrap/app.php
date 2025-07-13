@@ -9,11 +9,9 @@ use App\Http\Middleware\AnggotaMiddleware;
 use App\Http\Middleware\LogActivity;
 use Illuminate\Support\Facades\Log;
 
-// Log aplikasi dimulai
-Log::info('Aplikasi perpustakaan start - ' . date('Y-m-d H:i:s'));
-Log::debug('Sistem Manajemen Perpustakaan v1.0 - Diakses pada ' . date('Y-m-d H:i:s'));
+// PENTING: Jangan gunakan Log Facade sebelum aplikasi diinisialisasi
 
-return Application::configure(basePath: dirname(__DIR__))
+$app = Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
         commands: __DIR__.'/../routes/console.php',
@@ -36,3 +34,12 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withExceptions(function (Exceptions $exceptions): void {
         //
     })->create();
+
+// Sekarang aman menggunakan Log Facade karena aplikasi sudah diinisialisasi
+if (isset($app) && !app()->runningInConsole()) {
+    // Hanya log jika bukan di console mode (artisan)
+    Log::info('Aplikasi perpustakaan dimulai - ' . date('Y-m-d H:i:s'));
+    Log::debug('Sistem Manajemen Perpustakaan v1.0 - Diakses pada ' . date('Y-m-d H:i:s'));
+}
+
+return $app;

@@ -43,14 +43,14 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 // Admin routes
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/dashboard', [App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('dashboard');
-    
+
     // Kategori routes
     Route::resource('kategori', App\Http\Controllers\Admin\KategoriController::class);
-    
+
     // Buku routes
     Route::resource('buku', App\Http\Controllers\Admin\BukuController::class);
     Route::get('buku/search', [App\Http\Controllers\Admin\BukuController::class, 'search'])->name('buku.search');
-    
+
     // Anggota routes
     Route::resource('anggota', App\Http\Controllers\Admin\AnggotaController::class, ['parameters' => [
         'anggota' => 'anggota'
@@ -58,12 +58,12 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::put('anggota/{id}/status', [App\Http\Controllers\Admin\AnggotaController::class, 'updateStatus'])->name('anggota.status')->where('id', '[0-9]+');
     Route::put('anggota/{id}/perpanjang', [App\Http\Controllers\Admin\AnggotaController::class, 'perpanjang'])->name('anggota.perpanjang')->where('id', '[0-9]+');
     Route::put('anggota/{anggota}/reset-password', [App\Http\Controllers\Admin\AnggotaController::class, 'resetPassword'])->name('anggota.reset-password');
-    
+
     // Peminjaman routes
     Route::resource('peminjaman', App\Http\Controllers\Admin\PeminjamanController::class);
     Route::post('peminjaman/{peminjaman}/pengembalian', [App\Http\Controllers\Admin\PeminjamanController::class, 'pengembalian'])->name('peminjaman.pengembalian');
     Route::post('peminjaman/{peminjaman}/perpanjangan', [App\Http\Controllers\Admin\PeminjamanController::class, 'perpanjang'])->name('peminjaman.perpanjangan');
-    
+
     // Denda routes
     Route::get('denda/belum-dibayar', [App\Http\Controllers\Admin\DendaController::class, 'belumDibayar'])->name('denda.belum-dibayar');
     Route::get('denda/sudah-dibayar', [App\Http\Controllers\Admin\DendaController::class, 'sudahDibayar'])->name('denda.sudah-dibayar');
@@ -88,7 +88,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::get('inventaris-kelola-perbaikan/{buku}', [App\Http\Controllers\Admin\InventarisController::class, 'kelolaPerbaikan'])->name('inventaris.kelola-perbaikan');
     Route::post('inventaris-proses-perbaikan/{buku}', [App\Http\Controllers\Admin\InventarisController::class, 'prosesPerbaikan'])->name('inventaris.proses-perbaikan');
     Route::post('inventaris-selesaikan-perbaikan/{buku}', [App\Http\Controllers\Admin\InventarisController::class, 'selesaikanPerbaikan'])->name('inventaris.selesaikan-perbaikan');
-    
+
     // Security routes
     Route::get('security/activity-logs', [App\Http\Controllers\Admin\SecurityController::class, 'activityLogs'])->name('security.activity-logs');
     Route::get('security/backups', [App\Http\Controllers\Admin\SecurityController::class, 'backups'])->name('security.backups');
@@ -102,17 +102,17 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 // Rute untuk Staff
 Route::prefix('staff')->name('staff.')->middleware(['auth', 'staff'])->group(function () {
     Route::get('/dashboard', [StaffDashboardController::class, 'index'])->name('dashboard');
-    
+
     // Rute Kategori untuk Staff
     Route::resource('kategori', App\Http\Controllers\Admin\KategoriController::class)->except(['destroy']);
-    
+
     // Rute Buku untuk Staff
     // Route statis harus didefinisikan sebelum route dinamis
     Route::get('/buku/search', [App\Http\Controllers\Staff\BukuController::class, 'search'])->name('buku.search');
     Route::resource('buku', App\Http\Controllers\Staff\BukuController::class, ['parameters' => [
         'buku' => 'buku'
     ]])->except(['destroy']);
-    
+
     // Rute Anggota untuk Staff
     Route::resource('anggota', App\Http\Controllers\Staff\AnggotaController::class, ['parameters' => [
         'anggota' => 'anggota'
@@ -120,12 +120,12 @@ Route::prefix('staff')->name('staff.')->middleware(['auth', 'staff'])->group(fun
     Route::put('/anggota/{anggota}/status', [App\Http\Controllers\Staff\AnggotaController::class, 'updateStatus'])->name('anggota.status');
     Route::put('/anggota/{anggota}/perpanjang', [App\Http\Controllers\Staff\AnggotaController::class, 'perpanjang'])->name('anggota.perpanjang');
     Route::put('/anggota/{anggota}/reset-password', [App\Http\Controllers\Staff\AnggotaController::class, 'resetPassword'])->name('anggota.reset-password');
-    
+
     // Rute Peminjaman untuk Staff
     Route::resource('peminjaman', StaffPeminjamanController::class)->except(['destroy']);
     Route::post('/peminjaman/{peminjaman}/pengembalian', [StaffPeminjamanController::class, 'pengembalian'])->name('peminjaman.pengembalian');
     Route::post('/peminjaman/{peminjaman}/perpanjang', [StaffPeminjamanController::class, 'perpanjang'])->name('peminjaman.perpanjang');
-    
+
     // Rute Denda untuk Staff
     Route::get('/denda', [StaffDendaController::class, 'index'])->name('denda.index');
     Route::get('/denda/belum-dibayar', [StaffDendaController::class, 'belumDibayar'])->name('denda.belum-dibayar');
@@ -140,18 +140,18 @@ Route::prefix('staff')->name('staff.')->middleware(['auth', 'staff'])->group(fun
 // Rute untuk Anggota
 Route::prefix('anggota')->name('anggota.')->middleware(['anggota'])->group(function () {
     Route::get('/dashboard', [AnggotaDashboardController::class, 'index'])->name('dashboard');
-    
+
     // Rute katalog buku untuk anggota
     Route::get('/katalog', [AnggotaKatalogController::class, 'index'])->name('katalog.index');
     Route::get('/katalog/search', [AnggotaKatalogController::class, 'search'])->name('katalog.search');
     Route::get('/katalog/{buku}', [AnggotaKatalogController::class, 'show'])->name('katalog.show');
     Route::post('/katalog/{buku}/pinjam', [AnggotaKatalogController::class, 'pinjam'])->name('katalog.pinjam');
-    
+
     // Rute profil anggota
     Route::get('/profil', [AnggotaProfilController::class, 'profil'])->name('profil');
     Route::put('/profil', [AnggotaProfilController::class, 'updateProfil'])->name('profil.update');
     Route::put('/profil/password', [AnggotaProfilController::class, 'updatePassword'])->name('profil.password');
-    
+
     // Rute peminjaman untuk anggota
     Route::get('/peminjaman', [AnggotaPeminjamanController::class, 'index'])->name('peminjaman.index');
     // Rute dengan parameter statis harus didefinisikan sebelum rute dengan parameter dinamis
